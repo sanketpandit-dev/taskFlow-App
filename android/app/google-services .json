@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "692749538684",
+    "project_id": "finger-crew",
+    "storage_bucket": "finger-crew.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692749538684:android:b0c34ad3fce8c934a680f9",
+        "android_client_info": {
+          "package_name": "com.example.finger_crew"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBO-RrSbGDEFTfET4FW1QIg79Wt0YEz0FM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692749538684:android:7200a5377693c73fa680f9",
+        "android_client_info": {
+          "package_name": "task.flow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBO-RrSbGDEFTfET4FW1QIg79Wt0YEz0FM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
