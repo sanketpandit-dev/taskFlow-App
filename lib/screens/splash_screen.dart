@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../controller/login_controller.dart';
+import '../models/login_model.dart';
+import 'AdminDashScreen.dart';
+import 'LoginScreen.dart';
+import 'UserDashScreen.dart';
 import 'options_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -8,20 +13,24 @@ class SplashScreen extends StatefulWidget {
 
   const SplashScreen({Key? key, required this.nextScreen}) : super(key: key);
 
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+
   late AnimationController _animationController;
   late Animation<double> _progressAnimation;
   late Animation<double> _fadeInAnimation;
   late Animation<double> _scaleAnimation;
 
+  final LoginController _loginController = LoginController();
+
   @override
   void initState() {
     super.initState();
-
+    _checkLoginStatus();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
@@ -63,6 +72,41 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     });
   }
 
+  Future<void> _checkLoginStatus() async {
+    // Add a slight delay for better user experience
+    await Future.delayed(const Duration(seconds: 2));
+    bool isLoggedIn = await _loginController.isLoggedIn();
+    if (isLoggedIn) {
+      String? userType = await _loginController.getUserType();
+      if (mounted) {
+        if (userType == "1") {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Admindashscreen()),
+          );
+        } else if (userType == "2") {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Userdashscreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
+      }
+    } else {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    }
+  }
+
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -91,7 +135,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
             child: Stack(
               children: [
-                // Abstract wave patterns
+
                 Positioned(
                   top: 0,
                   left: 0,
@@ -286,7 +330,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             child: _buildCheckmark(),
           ),
 
-          // Accent circle with checkmark
+
           Positioned(
             right: 10,
             bottom: 10,
@@ -336,7 +380,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
-
 class WavePainter extends CustomPainter {
   final Color color;
   final bool isTop;

@@ -1,61 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../controller/ViewTaskAdminController.dart';
+import '../models/ViewTaskAdmin.dart';
 
-class Task {
-  final String date;
-  final String title;
-  final String projectName;
-  final String description;
+
+class ViewTaskAdminScreen extends StatefulWidget {
+  final String userId;
   final String userName;
 
-  Task({
-    required this.date,
-    required this.title,
-    required this.projectName,
-    required this.description,
+  const ViewTaskAdminScreen({
+    Key? key,
+    required this.userId,
     required this.userName,
-  });
-}
-
-class Viewtaskadmin extends StatefulWidget {
-  const Viewtaskadmin({Key? key}) : super(key: key);
+  }) : super(key: key);
 
   @override
-  State<Viewtaskadmin> createState() => _TaskScreenState();
+  State<ViewTaskAdminScreen> createState() => _ViewTaskAdminScreenState();
 }
 
-class _TaskScreenState extends State<Viewtaskadmin> {
+class _ViewTaskAdminScreenState extends State<ViewTaskAdminScreen> {
+  final Viewtaskadmincontroller _Viewtaskadmincontroller = Viewtaskadmincontroller();
   DateTime selectedDate = DateTime.now();
-
-  // Simulated task data
-  final List<Task> tasks = [
-    Task(date: "2025-03-11", title: "Bug Fixing", projectName: "App Development", description: "Fixed login issue", userName: "Sanket Pandit"),
-    Task(date: "2025-03-10", title: "UI Update", projectName: "Website Redesign", description: "Updated homepage UI", userName: "James Rodriguez"),
-    Task(date: "2025-03-09", title: "Testing", projectName: "QA Testing", description: "Performed unit testing", userName: "Sophia Chen"),
-  ];
-
-  Task? currentTask;
+  ViewTaskAdmin? currentTask;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchTaskForDate(selectedDate);
+    _loadTasks();
   }
 
-  void _fetchTaskForDate(DateTime date) {
-    String formattedDate = DateFormat('yyyy-MM-dd').format(date);
-    setState(() {
-      currentTask = tasks.firstWhere(
-            (task) => task.date == formattedDate,
-        orElse: () => Task(
-          date: formattedDate,
-          title: "No Task",
-          projectName: "-",
-          description: "No task available for this date.",
-          userName: "N/A",
-        ),
+  Future<void> _loadTasks() async {
+    setState(() => isLoading = true);
+    try {
+      final task = await _Viewtaskadmincontroller.fetchTasks(
+        widget.userId,
+        selectedDate,
       );
-    });
+      setState(() => currentTask = task);
+    } catch (e) {
+      setState(() => currentTask = ViewTaskAdmin.empty(selectedDate));
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -66,22 +53,21 @@ class _TaskScreenState extends State<Viewtaskadmin> {
       lastDate: DateTime(2030),
     );
     if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-      _fetchTaskForDate(picked);
+      setState(() => selectedDate = picked);
+      await _loadTasks();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
-        backgroundColor: Color (0xFF7F3DFF),
-        title: const Text("User Tasks", style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white)),
-
+        backgroundColor: Color(0xFF7F3DFF),
+        title: Text(
+          "User Tasks",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         elevation: 0,
       ),
       body: Center(
@@ -91,99 +77,123 @@ class _TaskScreenState extends State<Viewtaskadmin> {
             width: MediaQuery.of(context).size.width * 0.9,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              // gradient: const LinearGradient(
-              //   colors: [Color(0xFF6A82FB), Color(0xFFFC5C7D)],
-              //   begin: Alignment.topLeft,
-              //   end: Alignment.bottomRight,
-              // ),
-              color: Color (0xFF7F3DFF),
-              borderRadius: BorderRadius.circular(20),
+              gradient:LinearGradient(
+                colors: [
+                  Color(0xFF7F3DFF), // Primary Purple
+                  Color(0xFFB388FF), // Soft Lavender
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+                borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.15),
                   blurRadius: 12,
-                  offset: const Offset(0, 6),
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
-            child: Column(
+            child: isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.white))
+                : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // User Name
                 Text(
-                  currentTask!.userName,
-                  style: const TextStyle(
+                  widget.userName,
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 5),
-
-                // Date Picker
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        DateFormat('yyyy-MM-dd').format(selectedDate),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.calendar_today, color: Colors.white),
-                        onPressed: () => _selectDate(context),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-                const Divider(color: Colors.white54),
-
-                // Task Details
-                Text(
-                  currentTask!.title,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  currentTask!.projectName,
-                  style: const TextStyle(fontSize: 18, color: Colors.white70),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  currentTask!.description,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.white70),
-                ),
-                const SizedBox(height: 20),
-
-                // Apply Button
-                ElevatedButton(
-                  onPressed: () => _fetchTaskForDate(selectedDate),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    backgroundColor: Colors.white,
-                  ),
-                  child: const Text(
-                    "Apply Date",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color (0xFF7F3DFF)),
-                  ),
-                ),
+                SizedBox(height: 5),
+                _buildDatePicker(),
+                SizedBox(height: 10),
+                Divider(color: Colors.white54),
+                _buildTaskDetails(),
+                SizedBox(height: 20),
+                _buildApplyButton(),
               ],
             ),
           ),
         ),
       ),
-      backgroundColor:Colors.white,
+      backgroundColor: Colors.white,
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            DateFormat('yyyy-MM-dd').format(selectedDate),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.calendar_today, color: Colors.white),
+            onPressed: () => _selectDate(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskDetails() {
+    return Column(
+      children: [
+        Text(
+          currentTask?.taskName ?? "Loading...",
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 5),
+        Text(
+          currentTask?.projectName ?? "-",
+          style: TextStyle(fontSize: 18, color: Colors.white70),
+        ),
+        SizedBox(height: 10),
+        Text(
+          currentTask?.taskDescription ?? "Loading task details...",
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.white70),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildApplyButton() {
+    return ElevatedButton(
+      onPressed: _loadTasks,
+      style: ElevatedButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.white,
+      ),
+      child: Text(
+        "Apply Date",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF7F3DFF),
+        ),
+      ),
     );
   }
 }
-

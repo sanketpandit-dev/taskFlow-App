@@ -76,12 +76,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _fetchRoles();
   }
 
-  // Fetch roles for dropdown
+
   void _fetchRoles() async {
     try {
       RoleResponse response = await _roleController.fetchRoles();
       setState(() {
-        // Add a default "Select Role" item to the list
+
         _roles = [Role(lookupID: 0, lookupName: 'Select Role', lookupType: 'Default')] + response.data;
         _isLoading = false;
       });
@@ -95,52 +95,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
-  // Register the user
-  void _registerUser() async {
-    if (_formKey.currentState!.validate()) {
-      // Show loading indicator
-      setState(() {
-        _isRegistering = true;
-      });
 
-      try {
-        final user = UserRegistrationModel(
-          employeeID: _employeeIdController.text,
-          firstName: _firstNameController.text,
-          lastName: _lastNameController.text,
-          mobileNumber: _mobileController.text,
-          email: _emailController.text,
-          designation: _selectedRole,
-          password: _passwordController.text,
-        );
-
-        final response = await _registrationController.registerUser(user);
-
-        // Handle the response
-        if (response.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registration successful!')),
-          );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginScreen()),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.message)),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration failed: $e')),
-        );
-      } finally {
-        setState(() {
-          _isRegistering = false;
-        });
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -229,28 +184,40 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your employee ID';
                               }
+                              if (!RegExp(r'^EMP\d{3}$').hasMatch(value)) {
+                                return 'Invalid format.  (e.g., EMP001)';
+                              }
                               return null;
                             },
+
                           ),
                           const SizedBox(height: 16),
 
                           // First Name
                           TextFormField(
                             controller: _firstNameController,
+                            textCapitalization: TextCapitalization.words,
                             decoration: const InputDecoration(
+
                               labelText: 'First Name',
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your first name';
                               }
+                              if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(value)) {
+                                return 'Only alphabets are allowed';
+                              }
                               return null;
                             },
+
+
                           ),
                           const SizedBox(height: 16),
 
                           // Last Name
                           TextFormField(
+                            textCapitalization: TextCapitalization.words,
                             controller: _lastNameController,
                             decoration: const InputDecoration(
                               labelText: 'Last Name',
@@ -259,8 +226,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your last name';
                               }
+                              if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(value)) {
+                                return 'Only alphabets are allowed';
+                              }
                               return null;
                             },
+
+
                           ),
                           const SizedBox(height: 16),
 
@@ -269,8 +241,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             controller: _mobileController,
                             decoration: const InputDecoration(
                               labelText: 'Mobile Number',
+                              counterText: '',
                             ),
                             keyboardType: TextInputType.phone,
+                            maxLength: 10,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your mobile number';
@@ -281,6 +255,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               return null;
                             },
                           ),
+
                           const SizedBox(height: 16),
 
                           // Email

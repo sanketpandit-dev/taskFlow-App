@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-
+import '../controller/login_controller.dart';
+import '../models/login_model.dart';
 import 'AdminDashScreen.dart';
+import 'UserDashScreen.dart';
 import 'ForgetPassScreen.dart';
 import 'SignUpScreen.dart';
 
@@ -15,7 +18,31 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final LoginController _loginController = LoginController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadSavedCredentials();
+  }
+
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      Map<String, String?> credentials = await _loginController.getStoredCredentials();
+      if (credentials["email"] != null) {
+        setState(() {
+          _emailController.text = credentials["email"]!;
+
+        });
+      }
+    } catch (e) {
+      print("Error loading credentials: $e");
+    }
+  }
 
   @override
   void dispose() {
@@ -25,7 +52,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToForgotPassword() {
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -35,13 +61,63 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToRegister() {
-    // Navigate to registration screen
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const SignUpScreen(), // Use your RegistrationScreen
+        builder: (context) => const SignUpScreen(),
       ),
     );
+  }
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        var response = await _loginController.login(
+          LoginModel(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          ),
+        );
+
+
+        if (!mounted) return;
+
+        if (response["success"]) {
+          String? userType = await _loginController.getUserType();
+          if (userType == "1") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Admindashscreen()),
+            );
+          } else if (userType == "2") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Userdashscreen()),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response["message"])),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Login error: $e")),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
   }
 
   @override
@@ -53,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header with logo
               Container(
                 padding: const EdgeInsets.all(24),
                 color: const Color(0xFF7F3DFF),
@@ -67,12 +142,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: Center(
-
                         child: Image.asset(
                           'assets/images/img.png',
                           width: 40,
                           height: 40,
-
                         ),
                       ),
                     ),
@@ -96,8 +169,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-
-
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Card(
@@ -112,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Email / Username
                           TextFormField(
                             controller: _emailController,
                             decoration: const InputDecoration(
@@ -129,8 +199,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           const SizedBox(height: 20),
-
-
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
@@ -158,8 +226,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-
-                          // Forgot Password Link
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -174,17 +240,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-
-                          // Login Button
                           ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                // Implement login logic here
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Processing Login')),
-                                );
-                              }
-                            },
+                            onPressed: _isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF7F3DFF),
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -192,7 +249,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child: const Text(
+                            child: _isLoading
+                                ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : const Text(
                               'Login',
                               style: TextStyle(
                                 color: Colors.white,
@@ -202,8 +268,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -229,14 +293,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
-              // Copyright
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 16),
-
-                ),
-              ),
             ],
           ),
         ),
@@ -244,4 +300,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

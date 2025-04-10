@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/user_registration_model.dart';
 
@@ -31,20 +30,28 @@ class RegistrationController {
         body: jsonEncode(user.toJson()),
       );
 
-      // Debugging: Print response details
       print("Response Status: ${response.statusCode}");
       print("Response Headers: ${response.headers}");
       print("Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
-        // Ensure response is JSON before parsing
-        if (response.headers['content-type']?.contains('application/json') ?? false) {
-          return RegistrationResponse.fromJson(jsonDecode(response.body));
+        final responseData = jsonDecode(response.body);
+
+        if (responseData is Map<String, dynamic>) {
+          bool success = responseData['success'] ?? false;
+          String message = responseData['message'] ?? 'No message provided';
+
+          if (success) {
+            return RegistrationResponse(success: true, message: message);
+          } else {
+            print("Registration Failed: $message");
+            return RegistrationResponse(success: false, message: message);
+          }
         } else {
-          print("Error: Received non-JSON response");
+          print("Error: Unexpected response format");
           return RegistrationResponse(
             success: false,
-            message: 'Invalid response format. Expected JSON but received something else.',
+            message: 'Invalid response format from the server.',
           );
         }
       } else {
@@ -59,12 +66,18 @@ class RegistrationController {
         success: false,
         message: 'No internet connection. Please check your network.',
       );
+    } on FormatException {
+      print("FormatException: Invalid JSON response.");
+      return RegistrationResponse(
+        success: false,
+        message: 'Invalid response format from the server.',
+      );
     } catch (e, stackTrace) {
       print("Exception: $e");
       print("StackTrace: $stackTrace");
       return RegistrationResponse(
         success: false,
-        message: 'Registration failed: $e',
+        message: 'An unexpected error occurred: $e',
       );
     }
   }

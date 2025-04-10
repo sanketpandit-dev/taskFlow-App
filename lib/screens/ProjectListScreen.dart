@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'ProjectService.dart';
+import '../services/ProjectService.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({Key? key}) : super(key: key);
@@ -64,30 +64,25 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       try {
         Navigator.pop(context); // Close dialog first
 
-        // Show loading indicator
-        // showDialog(
-        //   context: context,
-        //   barrierDismissible: false,
-        //   builder: (context) => const Center(child: CircularProgressIndicator()),
-        // );
+
 
         final message = await projectService.addProject(projectController.text);
 
-        // Close loading indicator
-        Navigator.pop(context);
 
-        // Clear text field
+
+
+
         projectController.clear();
 
-        // Refresh projects list
+
         _loadProjects();
 
-        // Show success message
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
       } catch (e) {
-        // Close loading indicator if open
+
         Navigator.pop(context);
         _showErrorDialog('Failed to add project: $e');
       }
@@ -110,25 +105,25 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
-              Navigator.pop(context); // Close dialog first
+              Navigator.pop(context);
 
-              // Check if the project has an ID
+
               if (projects[index].projectID == null) {
                 _showErrorDialog('Cannot delete project without ID');
                 return;
               }
 
               try {
-                // Show loading indicator
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => const Center(child: CircularProgressIndicator()),
-                );
+
+                // showDialog(
+                //   context: context,
+                //   barrierDismissible: false,
+                //   builder: (context) => const Center(child: CircularProgressIndicator()),
+                // );
 
                 final message = await projectService.deactivateProject(projects[index].projectID!);
 
-                // Close loading indicator
+
                 Navigator.pop(context);
 
                 // Refresh projects list
